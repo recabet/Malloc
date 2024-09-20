@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include "heap.h"
 
@@ -89,10 +88,9 @@ int cl_find(const Chunk_List* cl, const uintptr_t* ptr)
 	{
 		if(cl->chunks[i].start == ptr)
 		{
-			return (int) i;
+			return i;
 		}
 	}
-
 	return -1;
 }
 
@@ -111,9 +109,9 @@ void cl_remove(Chunk_List* cl, size_t idx)
 	cl->count -= 1;
 }
 
-void* h_alloc(size_t size)
+void* h_alloc(const size_t size_bytes)
 {
-	const size_t size_words = (size + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
+	const size_t size_words = (size_bytes + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
 
 	if(size_words > 0)
 	{
@@ -144,7 +142,7 @@ void* h_alloc(size_t size)
 	return NULL;
 }
 
-void h_free(void* ptr)
+void h_free(const void* ptr)
 {
 	if(ptr)
 	{
@@ -157,7 +155,7 @@ void h_free(void* ptr)
 
 		assert(ptr == halloced_chunks.chunks[idx].start);
 		cl_insert(&hfreed_chunks, halloced_chunks.chunks[idx].start, halloced_chunks.chunks[idx].size);
-		cl_remove(&halloced_chunks, (size_t) idx);
+		cl_remove(&halloced_chunks, idx);
 	}
 }
 
@@ -168,7 +166,7 @@ static void m_region(const uintptr_t* start, const uintptr_t* end)
 		const uintptr_t* p = (const uintptr_t*) *start;
 		for(size_t i = 0; i < halloced_chunks.count; ++i)
 		{
-			Chunk chunk = halloced_chunks.chunks[i];
+			const Chunk chunk = halloced_chunks.chunks[i];
 			if(chunk.start <= p && p < chunk.start + chunk.size)
 			{
 				if(!reachable_chunks[i])
@@ -183,7 +181,7 @@ static void m_region(const uintptr_t* start, const uintptr_t* end)
 
 void h_collect()
 {
-	const uintptr_t* stack_start = (const uintptr_t*) __builtin_frame_address(0);
+	const uintptr_t* stack_start = __builtin_frame_address(0);
 	memset(reachable_chunks, 0, sizeof(reachable_chunks));
 	m_region(stack_start, stack_base + 1);
 

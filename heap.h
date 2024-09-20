@@ -26,7 +26,7 @@ typedef struct {
 
 void* h_alloc(size_t size_bytes);
 
-void h_free(void* ptr);
+void h_free(const void* ptr);
 
 void h_collect();
 
